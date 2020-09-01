@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<form method="post">
+    {% csrf_token %}
+    <legend>Inscription séance</legend>
+    {% for field in form %}
+    <div class="row">
+        {{ field.label }}
+    </div>
+    <div class="row">
+        {{ field }}
+        {{ field.errors }}
+    </div>
+    {% endfor %}
+    {% for hidden in form.hidden_fields %}
+    {{ hidden }}
+    {% endfor %}
+    <input class="primary" type="submit" value="S'inscrire">
+    <a href="/cancel" class="button secondary">Se désinscrire</a>
+</form>
+
+{% endblock content %}

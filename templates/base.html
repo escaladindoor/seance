@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Inscriptions aux séances Escalad'Indoor</title>
+        <link rel="stylesheet" href="{% static "mini.css" %}">
+        <link rel="stylesheet" href="{% static "style.css" %}">
+    </head>
+    <body>
+        <div id="wrap">
+        {% block content %}{% endblock content %}
+        </div>
+    </body>
+</html>
