@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from django.views.generic.edit import CreateView
 
-# Create your views here.
+from seances.forms import InscriptionForm
+
+
+class InscriptionView(CreateView):
+    form_class = InscriptionForm
+    template_name = "inscription.html"
+    success_url = "/"
