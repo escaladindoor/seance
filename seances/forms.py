@@ -3,13 +3,16 @@ import locale
 
 from django import forms
 from django.template.defaultfilters import date as _date
-from django.template.defaultfilters import time as _time
 
-from seances.models import Inscription
+from seances.models import Cancellation, Inscription
 
 
 def human_readable_date(date: datetime.date):
     return _date(date, "D j N")
+
+
+def human_readable_time(time: datetime.time):
+    return time.strftime("%H:%M")
 
 
 def get_seance_date_choices():
@@ -29,7 +32,7 @@ def get_time_choices():
     max = datetime.datetime.combine(today, datetime.time(22, 0))
     while t < max:
         t += datetime.timedelta(minutes=30)
-        choices.append((t.time(), t.strftime("%H:%M")))
+        choices.append((t.time(), human_readable_time(t.time())))
     return tuple(choices)
 
 
@@ -64,8 +67,12 @@ class InscriptionForm(forms.ModelForm):
 
 
 class CancellationForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["seance_date"].widget.choices = get_seance_date_choices()
+
     class Meta:
-        model = Inscription
+        model = Cancellation
         fields = [
             "first_name",
             "last_name",
@@ -78,7 +85,4 @@ class CancellationForm(forms.ModelForm):
             "seance_date": "Date de la séance",
             "first_name": "Prénom",
             "last_name": "Nom",
-            "is_ca": "Membre du CA ?",
-            "start": "Heure de début de séance",
-            "end": "Heure de fin de séance",
         }

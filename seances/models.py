@@ -40,3 +40,21 @@ class Inscription(models.Model):
                     )
                 }
             )
+
+
+class Cancellation(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    seance_date = models.DateField(null=False)
+    first_name = models.CharField(max_length=40, null=False)
+    last_name = models.CharField(max_length=40, null=False)
+
+    def clean(self):
+        if self.seance_date.weekday() not in (0, 2, 3):
+            raise ValidationError(
+                {
+                    "seance_date": (
+                        "La jour de la séance doit être un lundi, "
+                        "mercredi ou jeudi."
+                    )
+                }
+            )

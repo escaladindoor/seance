@@ -6,7 +6,7 @@
 {% for message in messages %}
 <div class="row">
 {% if message.tags == "success" %}
-    <div class="card" style="background: rgba(0, 255, 0, 0.2); padding: 20px;">
+    <div class="card">
         {{ message }}
     </div>
 {% endif %}
@@ -21,7 +21,7 @@
 
 <form method="post">
     {% csrf_token %}
-    <legend>Inscription séance</legend>
+    <legend>Désinscription séance</legend>
     {% for field in form %}
     <div class="row">
         {{ field.label }}
@@ -34,8 +34,7 @@
     {% for hidden in form.hidden_fields %}
     {{ hidden }}
     {% endfor %}
-    <input class="primary" type="submit" value="S'inscrire">
-    <a href="/cancel" class="button secondary">Se désinscrire</a>
+    <input class="primary" type="submit" value="Se désinscrire">
 </form>
 
 {% endblock content %}
