@@ -25,7 +25,7 @@ SECRET_KEY = "m#eoh+o)-x_l4ygy3zhlk9m3uf%7imtbasi$r2o3z7dos&evy%"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["seance.escalad-indoor.com", "127.0.0.1"]
+ALLOWED_HOSTS = ["seance.escalad-indoor.com", "127.0.0.1", "localhost"]
 
 
 # Application definition
