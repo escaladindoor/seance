@@ -19,6 +19,25 @@ class InscriptionForm(forms.ModelForm):
         fields = {"slot": forms.ModelChoiceField(queryset=None)}
         widgets = {"slot": forms.RadioSelect}
 
+    def clean(self):
+        cleaned_data = super().clean()
+        slot = cleaned_data["slot"]
+        desired_inscription_date = slot["seance_date"]
+        desired_inscription_week_nb = desired_inscription_date.isocalendar()[1]
+        member = cleaned_data["member"]
+        inscriptions = Inscription.objects.get(member=member)
+        for inscription in inscriptions:
+            week_nb = inscription["slot"]["seance_date"].isocalendar()[1]
+            if week_nb == desired_inscription_week_nb:
+                raise ValidationError(
+                    "Vous ne pouvez pas vous inscrire à plus d'une séance "
+                    "dans la même semaine. Vous pouvez venir au club les "
+                    "autres jours si la capacité de la salle le permet. "
+                    "Pour savoir si vous pouvez venir sans être inscrit, "
+                    "il suffit d'aller voir sur le site le nombre d'inscrits "
+                    "au créneau qui vous intéresse."
+                )
+
 
 class FFMELicenseAuthenticationForm(forms.Form):
     ffme_license = forms.CharField(
