@@ -1,60 +1,36 @@
-import datetime
-
+import annoying.fields
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from seances.utils import human_readable_date, human_readable_time
 
-class Inscription(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_ca = models.BooleanField()
+
+class Slot(models.Model):
     seance_date = models.DateField(null=False)
     start = models.TimeField(null=False)
     end = models.TimeField(null=False)
-    first_name = models.CharField(max_length=40, null=False)
-    last_name = models.CharField(max_length=40, null=False)
+    cancelled = models.BooleanField(default=False)
 
-    def clean(self):
-        if self.end <= self.start:
-            raise ValidationError(
-                {
-                    "end": (
-                        "L'heure de fin doit être supérieure (strictement) "
-                        "à l'heure de début."
-                    )
-                }
-            )
-        if self.start < datetime.time(17):
-            raise ValidationError(
-                {"start": "L'heure de départ ne peut précéder 17h."}
-            )
-        if self.end > datetime.time(22):
-            raise ValidationError(
-                {"end": "L'heure de fin ne peut dépasser 22h."}
-            )
-        if self.seance_date.weekday() not in (0, 2, 3):
-            raise ValidationError(
-                {
-                    "seance_date": (
-                        "La jour de la séance doit être un lundi, "
-                        "mercredi ou jeudi."
-                    )
-                }
-            )
+    class Meta:
+        indexes = [models.Index(fields=["seance_date", "start", "end"])]
+
+    def __str__(self):
+        return "{date}, entre {start} et {end}".format(
+            date=human_readable_date(self.seance_date),
+            start=human_readable_time(self.start),
+            end=human_readable_time(self.end),
+        )
 
 
-class Cancellation(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    seance_date = models.DateField(null=False)
-    first_name = models.CharField(max_length=40, null=False)
-    last_name = models.CharField(max_length=40, null=False)
+class Member(models.Model):
+    user = annoying.fields.AutoOneToOneField(
+        User, primary_key=True, on_delete=models.CASCADE
+    )
+    is_ca = models.BooleanField(default=False)
+    email_bis = models.EmailField(blank=True)
 
-    def clean(self):
-        if self.seance_date.weekday() not in (0, 2, 3):
-            raise ValidationError(
-                {
-                    "seance_date": (
-                        "La jour de la séance doit être un lundi, "
-                        "mercredi ou jeudi."
-                    )
-                }
-            )
+
+class Inscription(models.Model):
+    slot = models.ForeignKey(Slot, on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)

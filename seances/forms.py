@@ -2,87 +2,70 @@ import datetime
 import locale
 
 from django import forms
-from django.template.defaultfilters import date as _date
+from django.contrib.auth import authenticate
+from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import ValidationError
 
-from seances.models import Cancellation, Inscription
-
-
-def human_readable_date(date: datetime.date):
-    return _date(date, "D j N")
-
-
-def human_readable_time(time: datetime.time):
-    return time.strftime("%H:%M")
-
-
-def get_seance_date_choices():
-    seance_dates = list()
-    today = datetime.date.today()
-    for delta in range(14):
-        date = today + datetime.timedelta(days=delta)
-        if date.weekday() in (0, 2, 3):
-            seance_dates.append((date, human_readable_date(date)))
-    return tuple(seance_dates)
-
-
-def get_time_choices():
-    choices = list()
-    today = datetime.date.today()
-    t = datetime.datetime.combine(today, datetime.time(16, 30))
-    max = datetime.datetime.combine(today, datetime.time(22, 0))
-    while t < max:
-        t += datetime.timedelta(minutes=30)
-        choices.append((t.time(), human_readable_time(t.time())))
-    return tuple(choices)
+from seances.models import Inscription, Member, Slot
+from seances.slot import get_incoming_available_slots
 
 
 class InscriptionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["seance_date"].widget.choices = get_seance_date_choices()
+        self.fields["slot"].queryset = get_incoming_available_slots()
 
     class Meta:
         model = Inscription
-        fields = [
-            "first_name",
-            "last_name",
-            "seance_date",
-            "start",
-            "end",
-            "is_ca",
-        ]
-        widgets = {
-            "seance_date": forms.Select(choices=()),
-            "start": forms.Select(choices=get_time_choices()),
-            "end": forms.Select(choices=get_time_choices()),
-        }
         labels = {
-            "seance_date": "Date de la séance",
-            "first_name": "Prénom",
-            "last_name": "Nom",
-            "is_ca": "Membre du CA ?",
-            "start": "Heure de début de séance",
-            "end": "Heure de fin de séance",
+            "slot": "Créneau",
         }
+        fields = {"slot": forms.ModelChoiceField(queryset=None)}
+        widgets = {"slot": forms.RadioSelect}
 
 
-class CancellationForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
+class FFMELicenseAuthenticationForm(forms.Form):
+    ffme_license = forms.CharField(
+        widget=forms.TextInput(attrs={"autofocus": True}),
+        min_length=6,
+        max_length=6,
+        label="License FFME",
+    )
+    error_messages = {
+        "invalid_login": "License FFME invalide",
+        "inactive": "Compte désactivé",
+    }
+
+    def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+        self.user_cache = None
         super().__init__(*args, **kwargs)
-        self.fields["seance_date"].widget.choices = get_seance_date_choices()
 
-    class Meta:
-        model = Cancellation
-        fields = [
-            "first_name",
-            "last_name",
-            "seance_date",
-        ]
-        widgets = {
-            "seance_date": forms.Select(choices=()),
-        }
-        labels = {
-            "seance_date": "Date de la séance",
-            "first_name": "Prénom",
-            "last_name": "Nom",
-        }
+    def clean(self):
+        ffme_license = self.cleaned_data.get("ffme_license")
+        if ffme_license is not None:
+            self.user_cache = authenticate(
+                self.request,
+                ffme_license=ffme_license,
+            )
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+            else:
+                self.confirm_login_allowed(self.user_cache)
+        return self.cleaned_data
+
+    def confirm_login_allowed(self, user):
+        if not user.is_active:
+            raise ValidationError(
+                self.error_messages["inactive"],
+                code="inactive",
+            )
+
+    def get_user(self):
+        return self.user_cache
+
+    def get_invalid_login_error(self):
+        return ValidationError(
+            self.error_messages["invalid_login"],
+            code="invalid_login",
+        )

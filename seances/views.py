@@ -1,18 +1,20 @@
-from django.views.generic.edit import CreateView
+import datetime
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.contrib.messages.views import SuccessMessageMixin
+from django.views.generic.edit import CreateView
 
-from seances.forms import (
-    InscriptionForm,
-    CancellationForm,
-    human_readable_date,
-    human_readable_time,
-)
+from seances.forms import FFMELicenseAuthenticationForm, InscriptionForm
+from seances.models import Member
+from seances.utils import human_readable_date, human_readable_time
 
 
-class InscriptionView(SuccessMessageMixin, CreateView):
+class InscriptionView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     form_class = InscriptionForm
     template_name = "inscription.html"
     success_url = "/"
+    login_url = "/login/"
 
     def get_success_message(self, cleaned_data):
         msg = (
@@ -20,54 +22,19 @@ class InscriptionView(SuccessMessageMixin, CreateView):
             " pour {first_name} {last_name}"
         )
         return msg.format(
-            seance_date=human_readable_date(cleaned_data["seance_date"]),
-            start=human_readable_time(cleaned_data["start"]),
-            end=human_readable_time(cleaned_data["end"]),
-            first_name=cleaned_data["first_name"],
-            last_name=cleaned_data["last_name"],
+            seance_date=human_readable_date(cleaned_data["slot"].date),
+            start=human_readable_time(cleaned_data["slot"].start),
+            end=human_readable_time(cleaned_data["slot"].end),
+            first_name=cleaned_data["user"].first_name,
+            last_name=cleaned_data["user"].last_name,
         )
 
-    def get_initial(self):
-        """Make the form session-aware"""
-        initial = super().get_initial()
-        desired_keys = ["first_name", "last_name", "is_ca"]
-        for k in desired_keys:
-            initial[k] = self.request.session.get(k, None)
-        return initial
-
     def form_valid(self, form):
-        desired_keys = ["first_name", "last_name", "is_ca"]
-        for k in desired_keys:
-            self.request.session[k] = form.cleaned_data[k]
+        obj = form.save(commit=False)
+        obj.member = Member.objects.get(user=self.request.user)
         return super().form_valid(form)
 
 
-class CancellationView(SuccessMessageMixin, CreateView):
-    form_class = CancellationForm
-    template_name = "cancellation.html"
-    success_url = "/"
-
-    def get_success_message(self, cleaned_data):
-        msg = (
-            "Inscription annulée le {seance_date} "
-            "pour {first_name} {last_name}"
-        )
-        return msg.format(
-            seance_date=human_readable_date(cleaned_data["seance_date"]),
-            first_name=cleaned_data["first_name"],
-            last_name=cleaned_data["last_name"],
-        )
-
-    def get_initial(self):
-        """Make the form session-aware"""
-        initial = super().get_initial()
-        desired_keys = ["first_name", "last_name"]
-        for k in desired_keys:
-            initial[k] = self.request.session.get(k, None)
-        return initial
-
-    def form_valid(self, form):
-        desired_keys = ["first_name", "last_name"]
-        for k in desired_keys:
-            self.request.session[k] = form.cleaned_data[k]
-        return super().form_valid(form)
+class FFMELicenseLoginView(LoginView):
+    template_name = "login.html"
+    authentication_form = FFMELicenseAuthenticationForm

@@ -19,23 +19,28 @@
 {% endfor %}
 {% endif %}
 
-<form method="post">
+<form method="post" class="pure-form pure-form-stacked">
     {% csrf_token %}
-    <legend>Inscription séance</legend>
-    {% for field in form %}
-    <div class="row">
-        {{ field.label }}
-    </div>
-    <div class="row">
-        {{ field }}
-        {{ field.errors }}
-    </div>
+    <legend>Inscription créneau</legend>
+    {{ form.non_field_errors }}
+    {{ form.slot.errors }}
+    {% for choice in form.slot %}
+    <label for="{{ choice.id_for_label }}" class="pure-radio">
+        <input type="radio" id="{{ choice.id_for_label }}"
+        name="{{ form.slot.name }}"/>
+    {{ choice.choice_label }}
+    </label>
     {% endfor %}
     {% for hidden in form.hidden_fields %}
     {{ hidden }}
     {% endfor %}
     <input class="primary" type="submit" value="S'inscrire">
-    <a href="/cancel" class="button secondary">Se désinscrire</a>
+</form>
+
+<form method="post" class="pure-form pure-form-stacked">
+    {% csrf_token %}
+    {{ form }}
+    <input class="primary" type="submit" value="S'inscrire">
 </form>
 
 {% endblock content %}

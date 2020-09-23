@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ["seance.escalad-indoor.com", "127.0.0.1", "localhost"]
 
 INSTALLED_APPS = [
     "seances.apps.SeancesConfig",
+    "annoying",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -125,3 +126,11 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = "/var/www/seance/static"
+
+
+AUTHENTICATION_BACKENDS = [
+    "seances.auth_backend.FFMELicenseAuthBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+LOGIN_REDIRECT_URL = "/"
