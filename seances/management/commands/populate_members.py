@@ -2,9 +2,7 @@ import io
 
 import pandas as pd
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand, CommandError
-
-from seances.models import Member
+from django.core.management.base import BaseCommand
 
 
 def load_data(path):

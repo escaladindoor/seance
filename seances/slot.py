@@ -1,6 +1,4 @@
-import collections
 import datetime
-import itertools
 import typing
 
 from seances.models import Slot as SlotModel

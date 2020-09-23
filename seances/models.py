@@ -1,6 +1,5 @@
 import annoying.fields
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from seances.utils import human_readable_date, human_readable_time
